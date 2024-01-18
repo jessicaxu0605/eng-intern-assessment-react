@@ -207,9 +207,47 @@ describe('App component', () => {
         fireEvent.click(lapButton);
 
         expect(screen.getByText(/12:34:56/)).toBeTruthy();
+        expect(screen.getByText(/12:34:56/)).toBeTruthy();
         expect(screen.getByText(/00:01:00/)).toBeTruthy();
     })
 
-    test.todo("Error warning when time exceeds 59:59:99");
-    
+    test("Alert when time exceeds 59:59:99", () => {
+        render(<App/>);
+        //click Start button to start timer
+        const startButton = screen.getByText('Start');
+        fireEvent.click(startButton);
+
+        // let timer run 3600000ms -> time is 60:60:00, which is out of range
+        act(() => {
+            jest.advanceTimersByTime(3600000);
+        });
+
+        //expect alert
+        const alert = screen.getByTestId('alert');
+        expect(alert).toBeTruthy();
+    });
+
+    test("timer freezes at 59:59:99", () => {
+        render(<App/>);
+        //click Start button to start timer
+        const startButton = screen.getByText('Start');
+        fireEvent.click(startButton);
+
+        // let timer run 3599999 -> time is 59:59:00, which triggers time freezing
+        act(() => {
+            jest.advanceTimersByTime(3599999);
+        });
+
+        // let more time pass; time is frozen
+        act(() => {
+            jest.advanceTimersByTime(10000);
+        });
+
+        //expect 59:59:99 to still be displayed
+        const numZeroDigs = screen.getAllByText('59');
+        expect(numZeroDigs).toHaveLength(2); 
+        expect(screen.getByText('99')).toBeTruthy();
+    });
   });
+
+  

@@ -22,7 +22,7 @@ export default function StopWatch({  hundredths, seconds, minutes  }: Time) {
         display: 'flex',
         flexDirection: 'row',
         alignItems: 'center',
-        fontSize: '10rem',
+        fontSize: '8rem',
         lineHeight: '10rem',
         marginBottom: '-8rem'
     } 
@@ -49,3 +49,4 @@ export default function StopWatch({  hundredths, seconds, minutes  }: Time) {
 }
 
 export type {Time};
+

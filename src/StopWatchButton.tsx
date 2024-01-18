@@ -46,3 +46,4 @@ export default function StopWatchButton({  controls, stopwatchState  }: Props) {
         </div>
     )
 }
+

@@ -7,6 +7,7 @@ type StopwatchState = "running" | "paused" | "reset";
 
 export default function App() {
     const [time, setTime] = React.useState<number>(0);
+    const [limitReached, setLimitReached] = React.useState<boolean>(false);
 
     //useRef used to preserve lap history when stopwatch paused
     const laps= React.useRef<number[]>([]);                   //NOTE: laps are stored as absolute times
@@ -41,21 +42,28 @@ export default function App() {
         //start the timer
         if (stopwatchState =="running") {                        
             interval = setInterval(()=>{
-                setTime((time)=> time + 10);
+                setTime((prevTime)=> {
+                    const newTime = prevTime + 10;
+
+                    // when time limit is reached, stop stopwatch, trigger an alert
+                    if (newTime >= 3599900) {       //this is the max time that can be displayed in MM/SS/HH format without added hour digits
+                        setStopwatchState('paused');
+                        setLimitReached(true);
+                    }
+                    return newTime});
                 setCurLapTime((curLapTime) => curLapTime + 10);
             }, 10);
-            console.log(time);
     
             return () => { 
-                clearInterval(interval); 
+                if (interval) clearInterval(interval);
             }
 
         //stop the timer
         } else if (stopwatchState == "paused") {                 
             if (interval) clearInterval(interval);
 
-        //set time to 0
-        } else if (stopwatchState == "reset") {                  
+        //set time to 0 if (stopwatchState == "reset")
+        } else {           
             if (interval) clearInterval(interval);      //additional check that timer has stopped
             laps.current = [];                          //clear all laps
             setTime(0);
@@ -110,35 +118,39 @@ export default function App() {
                 hundredths={Math.floor((time/10)%100)} 
                 seconds={Math.floor(((time/1000)%60))} 
                 minutes={Math.floor(time/60000)}/>
-                <StopWatchButton stopwatchState={stopwatchState} controls={{  runFunc, pauseFunc, resetFunc, lapFunc  }}/>
-                <div style={lapStyle}>
-                <button onClick={()=>{setShowLaps(!showLaps)}} style={buttonStyle} data-testid="show-lap-button">{showLaps? 'Hide Laps' : 'Show Laps'}</button>               
-                {showLaps?
-                    <ul style={listStyle} data-testid="lap-list">
-                        {/* recorded laps */}
-                        {laps.current.map((val, i) => {
-                            const lapTime = getDisplayTime(laps.current[i]);
-                            return <li key={i}>Lap {i + 1}: 
-                                {String(lapTime.minutes).padStart(2, '0')}:
-                                {String(lapTime.seconds).padStart(2, '0')}:
-                                {String(lapTime.hundredths).padStart(2, '0')}</li>;
-                        })}
+            {limitReached ? <h2 data-testid="alert">Are you still there? Time Limit has been reached, please reset the stopwatch. </h2> : null}
+            
+            <StopWatchButton stopwatchState={stopwatchState} controls={{  runFunc, pauseFunc, resetFunc, lapFunc  }}/>
+            
+            <div style={lapStyle}>
+            <button onClick={()=>{setShowLaps(!showLaps)}} style={buttonStyle} data-testid="show-lap-button">{showLaps? 'Hide Laps' : 'Show Laps'}</button>               
+            {showLaps?
+                <ul style={listStyle} data-testid="lap-list">
+                    {/* recorded laps */}
+                    {laps.current.map((val, i) => {
+                        const lapTime = getDisplayTime(laps.current[i]);
+                        return <li key={i}>Lap {i + 1}: 
+                            {String(lapTime.minutes).padStart(2, '0')}:
+                            {String(lapTime.seconds).padStart(2, '0')}:
+                            {String(lapTime.hundredths).padStart(2, '0')}</li>;
+                    })}
 
-                        {/* actively incrementing lap */}
-                        {stopwatchState != "reset" ?
-                            <li className='current-lap'>Lap {laps.current.length + 1}: 
-                                {String(getDisplayTime(curLapTime).minutes).padStart(2, '0')}:
-                                {String(getDisplayTime(curLapTime).seconds).padStart(2, '0')}:
-                                {String(getDisplayTime(curLapTime).hundredths).padStart(2, '0')}
-                            </li>
-                        : null
-                        }
-                    </ul>
-                    :null
-                }               
-                </div>
+                    {/* actively incrementing lap */}
+                    {stopwatchState != "reset" ?
+                        <li className='current-lap'>Lap {laps.current.length + 1}: 
+                            {String(getDisplayTime(curLapTime).minutes).padStart(2, '0')}:
+                            {String(getDisplayTime(curLapTime).seconds).padStart(2, '0')}:
+                            {String(getDisplayTime(curLapTime).hundredths).padStart(2, '0')}
+                        </li>
+                    : null
+                    }
+                </ul>
+                :null
+            }               
+            </div>
         </div>
     )
 }
 
 export type {StopwatchState};
+

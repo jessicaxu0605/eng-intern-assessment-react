@@ -91,5 +91,3 @@ describe("StopWatchButton component", ()=>{
     //run/pause/reset/lap Func implementation is in App.tsx; tests in App.test.tsx
 })
 
-
-
